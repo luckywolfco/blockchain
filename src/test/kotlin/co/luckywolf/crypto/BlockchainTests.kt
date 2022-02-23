@@ -2,7 +2,7 @@ package co.luckywolf.crypto
 
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
-import co.luckywolf.crypto.BlockChains as chain
+import co.luckywolf.crypto.Blockchains as chain
 
 class BlockchainTests {
 
