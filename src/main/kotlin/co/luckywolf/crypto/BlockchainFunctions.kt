@@ -2,33 +2,42 @@ package co.luckywolf.crypto
 
 import java.math.BigInteger
 import java.security.MessageDigest
+import java.security.PrivateKey
 
 object BlockchainFunctions {
 
-    val hash: Func<Blockchains.Block, ByteArray> by lazy { { hash(it.data, it.previousHash, it.timestamp, it.nonce) } }
-    val formatBitcoinHash: Func<ByteArray, String> = { toHex(it) }
+    fun sign(transaction: Blockchains.Transaction, privateKey: PrivateKey) {
 
-    val validate: Func2<List<Blockchains.Block>, Int, Boolean> = { blocks, difficulty ->
-        validate(blocks, difficulty, 1, matchHash, isMined)
     }
-    val matchHash: Func2<Blockchains.Block, Blockchains.Block, Boolean> = { curr, prev ->
-        curr.hash == formatBitcoinHash(hash(curr)) &&
-                curr.previousHash == formatBitcoinHash(hash(prev))
+
+    fun hash(block: Blockchains.Block): ByteArray {
+        val data = "${block.previousHash}${block.data}${block.timestamp}${block.nonce}".toByteArray()
+        return hash(data)
     }
-    val isMined: Func2<Blockchains.Block, Int, Boolean> = { c, d ->
-        val targetPrefix = "0".repeat(d)
-        c.hash.startsWith(targetPrefix)
+
+    fun hash(transaction: Blockchains.Transaction): ByteArray {
+        val data = toHex(transaction.publicKeyFrom.encoded) +
+                toHex(transaction.publicKeyTo.encoded) +
+                transaction.amount.toString() + transaction.sequence
+        return hash(data.toByteArray())
+    }
+
+    fun hashCheck(curr: Blockchains.Block, prev: Blockchains.Block): Boolean {
+        return curr.hash == toHex(hash(curr)) &&
+                curr.previousHash == toHex(hash(prev))
+    }
+
+    fun isMined(block: Blockchains.Block, difficulty: Int): Boolean {
+        val targetPrefix = "0".repeat(difficulty)
+        return block.hash.startsWith(targetPrefix)
     }
 
     fun hash(
-        previousHash: String,
-        data: String,
-        timestamp: Long,
-        nonce: Long,
+        data: ByteArray,
         algorithm: String = "SHA-256"
     ): ByteArray {
         val md = MessageDigest.getInstance(algorithm)
-        md.update("$previousHash$data$timestamp$nonce".toByteArray())
+        md.update(data)
         return md.digest()
     }
 
@@ -38,9 +47,14 @@ object BlockchainFunctions {
     fun validate(
         blocks: List<Blockchains.Block>,
         difficulty: Int,
+    ): Boolean {
+        return validate(blocks, difficulty, 1)
+    }
+
+    private fun validate(
+        blocks: List<Blockchains.Block>,
+        difficulty: Int,
         i: Int,
-        hashCheck: (Blockchains.Block, Blockchains.Block) -> Boolean,
-        targetCheck: (Blockchains.Block, Int) -> Boolean
     ): Boolean {
 
         if (blocks.isEmpty() || blocks.size == 1) return true
@@ -49,8 +63,8 @@ object BlockchainFunctions {
         val curr = blocks[i]
 
         return when (i) {
-            blocks.size - 1 -> hashCheck(curr, prev) && targetCheck(curr, difficulty)
-            else -> validate(blocks, difficulty, (i + 1), hashCheck, targetCheck)
+            blocks.size - 1 -> hashCheck(curr, prev) && isMined(curr, difficulty)
+            else -> validate(blocks, difficulty, (i + 1))
         }
     }
 

@@ -1,12 +1,12 @@
 package co.luckywolf.crypto
 
-import co.luckywolf.crypto.BlockchainFunctions.formatBitcoinHash
 import co.luckywolf.crypto.BlockchainFunctions.hash
 import co.luckywolf.crypto.BlockchainFunctions.mine
+import co.luckywolf.crypto.BlockchainFunctions.toHex
+import java.security.KeyPair
+import java.security.PrivateKey
+import java.security.PublicKey
 import java.time.Instant
-
-typealias Func<A, B> = (A) -> B
-typealias Func2<A, B, C> = (A, B) -> C
 
 object Blockchains {
 
@@ -18,7 +18,37 @@ object Blockchains {
         val timestamp: Long = Instant.now().toEpochMilli(),
         var nonce: Long = 0L,
     ) {
-        val hash = formatBitcoinHash(hash(this))
+        val hash = toHex(hash(this))
+    }
+
+    data class CryptoWallet(val keyPair: KeyPair) {
+
+        fun addTransaction(transaction: Transaction) {
+
+        }
+
+        fun balance(): Float {
+            return 9F  //getMyTransactions().sumBy { it.amount }
+        }
+    }
+
+
+    //Inputs, which are references to previous transactions that prove the sender has funds to send.
+    //Outputs, which shows the amount relevant addresses received in the transaction. ( These outputs are referenced as inputs in new transactions )
+    data class Transaction(
+        val publicKeyFrom: PublicKey,
+        val publicKeyTo: PublicKey,
+        val amount: Float
+    ) {
+        val sequence = 0
+
+        fun sign(privateKey: PrivateKey) {
+            BlockchainFunctions.sign(this, privateKey)
+        }
+
+//        fun hash(): Either<CryptoFunctions.CryptoError, String> {
+//            return hash(this).map { CryptoFunctions.toHex(it) }
+//        }
     }
 
 

@@ -26,7 +26,15 @@ class BlockchainTests {
             ), 2
         )
 
-        assertTrue(BlockchainFunctions.validate(ledger.blocks, 2))
+        assertTrue(BlockchainFunctions.validate(ledger.blocks, 2, ))
+
+    }
+
+    @Test
+    fun wallet() {
+
+
+
 
     }
 }
